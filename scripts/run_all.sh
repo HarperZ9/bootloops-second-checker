@@ -19,7 +19,12 @@ if [ $# -ge 2 ]; then BL=$2; else
   git -C "$BL" checkout -q "$BL_COMMIT"
 fi
 test "$(git -C "$BL" rev-parse HEAD)" = "$BL_COMMIT" || { echo "BootLoops is not at the pinned commit"; exit 2; }
-(cd "$BL/tools/trust/receipt" && sha256sum -b WITNESS_FORMAT.md core.py receipt.py emitter.py) > "$OUT/bootloops-pins.sha256"
+# Hash the committed bytes (git blobs), not the working tree: a Windows checkout
+# with core.autocrlf=true rewrites line endings and changes the hashes.
+for f in WITNESS_FORMAT.md core.py receipt.py emitter.py; do
+  printf '%s *%s
+' "$(git -C "$BL" show "$BL_COMMIT:tools/trust/receipt/$f" | sha256sum | cut -d' ' -f1)" "$f"
+done > "$OUT/bootloops-pins.sha256"
 diff "$OUT/bootloops-pins.sha256" "$REPO/inputs/bootloops-pins.sha256"
 
 python -m venv "$OUT/venv"
