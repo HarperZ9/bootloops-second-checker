@@ -68,7 +68,9 @@ meant to change in the follow-up to BootLoops.
   all 12,187 corpus witnesses, up from a sample of 46, in 1,729 s on 8 parallel
   jobs, with no axiom beyond `propext`, `Classical.choice` and `Quot.sound`. One
   witness passes at 300,000 row terms with a single statement literal and times
-  out at 1,000,000. CHUNK_SUMMARY_TBD (section 13)
+  out at 1,000,000. Splitting the statement into parts halves the time at
+  300,000 terms; at 1,000,000 the run then exhausts the machine's 23 GB of memory
+  (section 13).
 - **Axiom audit.** Each Lean statement is fixed and hashed before any proof
   exists, and an audit module that the prover does not write restates it. All 7
   planted controls failed the audit and the honest proof passed it. One control
@@ -445,13 +447,16 @@ python scripts/lean_run.py   OUT/corpus OUT/lean_scale --only-scale
 python scripts/compare_third.py OUT/corpus OUT/third
 python scripts/fuzz.py       BOOTLOOPS_ROOT OUT/fuzz --seed 20261002
 python scripts/cli_probe.py  BOOTLOOPS_ROOT OUT/cli_probe
-python scripts/lean_reflect.py OUT/corpus OUT/lean_reflect --jobs 8 --sizes 10000,30000,100000,300000
+python scripts/lean_reflect.py OUT/corpus OUT/lean_reflect --jobs 8 --sizes 10000,30000,100000,300000,1000000
 python scripts/lean_reflect.py OUT/corpus OUT/lean_chunked --skip-corpus --skip-controls \
-    --chunk-terms 10000 --sizes 100000,300000,1000000,3000000
+    --chunk-terms 10000 --sizes 300000,1000000 --timeout 2400
 python scripts/summarize.py  OUT
 ```
 
 ## 9. Fresh-clone rerun on a second platform
+
+Outputs of every extension leg are in `results/run-2026-10-02-linux/`, hashed in
+its `SHA256SUMS` after the same path sanitizing as the first run.
 
 The repository was cloned fresh into Ubuntu 24.04 under WSL 2 and `run_all.sh`
 was run once, end to end. Nothing was installed system-wide. Node.js 25.2.1 came
@@ -760,7 +765,19 @@ compile):
 | 300,000 | 1,229.7 s | 80.9 s | 1.4 s |
 | 1,000,000 | **timeout** (1,800 s) | | |
 
-CHUNKED_TBD
+With the statement split into `def` parts of about 10,000 terms each, joined by
+`++` inside `AllOK` (same proposition, 2,400 s limit per compile):
+
+| row terms | Spec | Prf | Aud |
+|---|---|---|---|
+| 300,000 | 553.9 s | 98.0 s | 5.7 s |
+| 1,000,000 | **timeout** (2,406 s), with the Lean process at 22 GB of the machine's 23 GB | | |
+
+**Where it stops.** One witness passes at 300,000 row terms, 30 times the
+10,000 reported this morning, and fails at 1,000,000 in both forms. Chunking
+inside one module halves the elaboration time and leaves memory as the limit.
+Putting each part in its own module, compiled separately, would be the next step
+and was not tried.
 
 The proof itself is cheap and grows close to linearly. What stops the
 single-literal form is elaborating the statement, a list literal of up to a
@@ -825,3 +842,13 @@ The first search found no published witness files. It was repeated on
 
 The statement in section 3.1 therefore stands as of 2026-10-02: no RECEIPT
 witness or system snapshot is published.
+
+## 15. Prose check log
+
+The new prose in this report (summary, sections 9 to 14, the correction in
+section 1) and the follow-up email draft were run through the Articulate prose
+checker on 2026-10-02. First passes flagged four phrases ("rather than",
+"instead of" twice, and one ", not Y" construction), which were rewritten. Final
+verdicts: report text clean (texture score 0, in three passes covering 1,010, 948
+and 331 words), email draft clean (texture score 0, 195 words). The checker names
+prose patterns; it does not check facts.
