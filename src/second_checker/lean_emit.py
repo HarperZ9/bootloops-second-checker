@@ -73,6 +73,34 @@ def linear_form(tag, rows, w) -> str:
             f"  intro x; ring_nf; reduce_mod_char; ring_nf; reduce_mod_char\n")
 
 
+def _columns(rows, w):
+    """Per column k: [(lam_i, R_i[k])], pos = [k == t], neg = c_k (0 when absent)."""
+    by_col: dict[int, list[tuple[int, int]]] = {}
+    for i, li in sorted(w.lam.items()):
+        for col, v in sorted(rows[i].items()):
+            by_col.setdefault(col, []).append((li, v))
+    cols = sorted(set(by_col) | {w.target} | set(w.c))
+    return [(k, by_col.get(k, []), 1 if k == w.target else 0, w.c.get(k, 0)) for k in cols]
+
+
+def reflect_statement(tag, rows, w) -> str:
+    """The theorem statement alone, fixed before any proof is attempted."""
+    cols = _columns(rows, w)
+    lines = []
+    for j, (k, ts, pos, neg) in enumerate(cols):
+        sep = "," if j < len(cols) - 1 else ""
+        terms = ", ".join(f"({li}, {v})" for li, v in ts)
+        lines.append(f"  ([{terms}], {pos}, {neg}){sep}  -- col {k}")
+    body = "\n".join(lines)
+    return f"theorem {theorem_name(tag)}_refl :\n  ReceiptLean.AllOK {w.p} [\n{body}\n  ]"
+
+
+def reflect_form(tag, rows, w, statement=None) -> str:
+    """Reflection form: one kernel evaluation of allCheck per witness."""
+    st = statement if statement is not None else reflect_statement(tag, rows, w)
+    return st + " :=\n  ReceiptLean.allCheck_sound _ _ (by decide +kernel)\n"
+
+
 HEADER = """import Mathlib.Data.ZMod.Basic
 import Mathlib.Tactic.ReduceModChar
 import Mathlib.Tactic.Ring
@@ -86,6 +114,10 @@ set_option profiler.threshold 0
 """
 
 
-def lean_file(blocks: list[str], names: list[str]) -> str:
+def lean_file(blocks: list[str], names: list[str], reflect: bool = False) -> str:
     axioms = "".join(f"#print axioms {n}\n" for n in names)
-    return HEADER + "\n" + "\n".join(blocks) + "\n" + axioms
+    head = HEADER
+    if reflect:
+        head = HEADER.replace("import Mathlib.Tactic.Ring\n",
+                              "import Mathlib.Tactic.Ring\nimport ReceiptLean.Reflect\n")
+    return head + "\n" + "\n".join(blocks) + "\n" + axioms
