@@ -209,6 +209,13 @@ def main():
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     env = lean_env()
+    lib = os.path.join(LEAN_DIR, ".lake", "build", "lib", "lean", "ReceiptLean")
+    os.makedirs(lib, exist_ok=True)
+    r = subprocess.run(["lean", "-o", os.path.join(lib, "Reflect.olean"),
+                        os.path.join(LEAN_DIR, "ReceiptLean", "Reflect.lean")],
+                       cwd=LEAN_DIR, env=env, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise SystemExit(f"ReceiptLean/Reflect.lean did not compile:\n{r.stdout}{r.stderr}")
     rep = {"controls": controls(env, a.timeout)}
     rep["scale"] = []
     for T in [int(x) for x in a.sizes.split(",") if x]:
