@@ -52,13 +52,35 @@ def sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def spec_src(items):
+def _entry(ts, pos, neg):
+    return "  ([" + ", ".join(f"({li}, {v})" for li, v in ts) + f"], {pos}, {neg})"
+
+
+def spec_src(items, chunk_terms=0):
+    """With chunk_terms > 0, the column list is split into parts of about that many
+    terms, each its own `def`, and the statement is AllOK over their concatenation.
+    The proposition is the same list; only its elaboration is split."""
     out = [HEAD, "namespace RSpec\n"]
     for k, p, rows, w in items:
         cols = _columns(rows, w)
-        body = ",\n".join("  ([" + ", ".join(f"({li}, {v})" for li, v in ts) + f"], {pos}, {neg})"
-                          for _, ts, pos, neg in cols)
-        out.append(f"-- {k}: target {w.target}, p {p}\ndef stmt_{k} : Prop := ReceiptLean.AllOK {p} [\n{body}\n]\n")
+        out.append(f"-- {k}: target {w.target}, p {p}\n")
+        if chunk_terms <= 0:
+            body = ",\n".join(_entry(ts, pos, neg) for _, ts, pos, neg in cols)
+            out.append(f"def stmt_{k} : Prop := ReceiptLean.AllOK {p} [\n{body}\n]\n")
+            continue
+        parts, cur, n = [], [], 0
+        for _, ts, pos, neg in cols:
+            if cur and n + len(ts) > chunk_terms:
+                parts.append(cur)
+                cur, n = [], 0
+            cur.append(_entry(ts, pos, neg))
+            n += max(1, len(ts))
+        parts.append(cur)
+        for j, part in enumerate(parts):
+            body = ",\n".join(part)
+            out.append(f"def part_{k}_{j} : List (List (ℕ × ℕ) × ℕ × ℕ) := [\n{body}\n]\n")
+        cat = " ++ ".join(f"part_{k}_{j}" for j in range(len(parts)))
+        out.append(f"def stmt_{k} : Prop := ReceiptLean.AllOK {p} ({cat})\n")
     return "".join(out) + "end RSpec\n"
 
 
@@ -105,11 +127,11 @@ def leancheck(mod, env):
     return r.returncode
 
 
-def run_batch(tag, items, env, timeout, prf_body=None, tamper_spec=None):
+def run_batch(tag, items, env, timeout, prf_body=None, tamper_spec=None, chunk_terms=0):
     """Spec, then Prf, then Aud, then the audit. Returns a result dict."""
     keys = [k for k, *_ in items]
     smod, pmod, amod = f"{tag}Spec", f"{tag}Prf", f"{tag}Aud"
-    spec = spec_src(items)
+    spec = spec_src(items, chunk_terms)
     fixed = sha(spec)  # recorded before any proof exists
     res = {"tag": tag, "n": len(keys), "spec_sha256": fixed}
     s = compile_(smod, spec, env, timeout)
@@ -206,6 +228,8 @@ def main():
     ap.add_argument("--sizes", default="")
     ap.add_argument("--timeout", type=int, default=1800)
     ap.add_argument("--skip-corpus", action="store_true")
+    ap.add_argument("--skip-controls", action="store_true")
+    ap.add_argument("--chunk-terms", type=int, default=0)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     env = lean_env()
@@ -216,13 +240,17 @@ def main():
                        cwd=LEAN_DIR, env=env, capture_output=True, text=True)
     if r.returncode != 0:
         raise SystemExit(f"ReceiptLean/Reflect.lean did not compile:\n{r.stdout}{r.stderr}")
-    rep = {"controls": controls(env, a.timeout)}
+    rep = {"controls": [] if a.skip_controls else controls(env, a.timeout)}
     rep["scale"] = []
+    save(a.out, rep)
     for T in [int(x) for x in a.sizes.split(",") if x]:
         rows, w = artificial(20261002 + T, T)
-        r = run_batch(f"Rs{T}", [(f"s{T}", w.p, rows, w)], env, a.timeout)
+        r = run_batch(f"Rs{T}c{a.chunk_terms}", [(f"s{T}", w.p, rows, w)], env, a.timeout,
+                      chunk_terms=a.chunk_terms)
+        r["chunk_terms"] = a.chunk_terms
         r["terms"] = T
         rep["scale"].append(r)
+        save(a.out, rep)
         print("scale", T, r["audit_pass"], r["wall_s"], flush=True)
         if not r["audit_pass"]:
             break
@@ -236,7 +264,12 @@ def main():
         rep["corpus_wall_s"] = round(time.perf_counter() - t0, 1)
         n_pass = sum(r["n"] for r in rep["corpus"] if r["audit_pass"])
         print("corpus", n_pass, "of", len(mapping), "witnesses in passing modules", rep["corpus_wall_s"], flush=True)
-    with open(os.path.join(a.out, "lean_reflect.json"), "w", encoding="utf-8", newline="\n") as fh:
+    save(a.out, rep)
+
+
+def save(out, rep):
+    """Written after every step, so a stopped run keeps what it measured."""
+    with open(os.path.join(out, "lean_reflect.json"), "w", encoding="utf-8", newline="\n") as fh:
         json.dump(rep, fh, indent=1)
 
 
