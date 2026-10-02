@@ -39,6 +39,12 @@ Mathlib (several GB).
 | `scripts/edge_cases.py` | inputs where the spec is silent or the two readings differ |
 | `scripts/lean_run.py` | kernel check of a sample, Lean negative controls, scale limits |
 | `scripts/sunrise_quadrature.py` | a 30-digit Feynman-parameter check of one sunrise value |
+| `third_checker/` | checkers written by other model families from the spec and tool page only, with their prompts and raw responses |
+| `scripts/compare_third.py` | runs the model-written checkers over the whole corpus |
+| `scripts/fuzz.py`, `scripts/fuzz_cases.py` | seeded differential fuzzer over the witness format, with minimized repros |
+| `lean/ReceiptLean/Reflect.lean` | proof by reflection: a verified column checker the kernel evaluates |
+| `scripts/lean_reflect.py` | kernel check of the corpus by reflection, with a statement-fixed axiom audit and planted controls |
+| `EXTENSION-DECISION.md` | what each extension was meant to change, written before the work |
 | `REPORT.md` | results, disagreements and limits |
 | `.provenance.log` | when the spec, the docs and `core.py` were first opened |
 

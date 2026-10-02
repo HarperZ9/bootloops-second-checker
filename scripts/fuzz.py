@@ -199,6 +199,21 @@ def main():
                                   "case_id": case_id, "repro_verdicts": verdicts,
                                   "mutations_seen": mut_kinds[:40]})
         print(f"B{j:03d}", len(keys), dict(sig), muts, flush=True)
+    with open(os.path.join(a.out, "cases.csv"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("case,base,mutations," + ",".join(checkers) + "\n")
+        for k in sorted(res):
+            _, base_id, _, muts, _ = by_key[k]
+            fh.write(f"{k},{base_id},{'+'.join(muts)}," +
+                     ",".join(res[k].get(x, ("n/a",))[0] for x in checkers) + "\n")
+    single = {}
+    for k, v in res.items():
+        if k.startswith("s"):
+            m = by_key[k][3][0]
+            for x in checkers:
+                cls = v.get(x, ("n/a",))[0]
+                single.setdefault(m, {}).setdefault(x, {}).setdefault(cls, 0)
+                single[m][x][cls] += 1
+    report["single_mutation_classes"] = single
     with open(os.path.join(a.out, "fuzz.json"), "w", encoding="utf-8", newline="\n") as fh:
         json.dump(report, fh, indent=1, sort_keys=True)
     shutil.rmtree(work, ignore_errors=True)
