@@ -17,6 +17,9 @@ SUBS = [
      + SEP + "claude" + SEP + "C--dev" + SEP + "[0-9a-f-]+" + SEP + "scratchpad" + SEP + "bootloops"
      + SEP + "bootloops", "<bootloops>"),
     ("D:" + SEP + "bootloops-second-checker", "<repo>"),
+    ("/root/bsc-run/OUT/bootloops", "<bootloops>"),
+    ("/root/bsc-run/repo", "<repo>"),
+    ("/root/bsc-run/(?:OUT|EXT)", "<out>"),
     ("D:" + SEP + "bootloops-work", "<out>"),
     ("/mnt/[cd]/[^\\s\"]*", "<path>"),
     ("[A-Za-z]:(?:" + BS + BS + "|/)[^\\s\"]*", "<path>"),

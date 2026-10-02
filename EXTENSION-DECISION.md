@@ -27,9 +27,14 @@ come from inputs one author thought of.
 
 ## Decision
 
+Item 7 was requested before this record was written. The axiom audit with a
+planted extra-axiom control was requested after it, during the work, and is
+reported in REPORT.md section 13 with item 5.
+
 Do all seven, in that order, and keep nulls. The follow-up email keeps its one
-question. Extensions change the evidence behind its sentences, not its length;
-the draft must stay under 200 words, so most results live in REPORT.md only.
+question. Extensions change the evidence behind its sentences and leave its
+length alone; the draft must stay under 200 words, so most results live in
+REPORT.md only.
 
 Limits stated up front: the new checker is model-written, and "different model
 family" is not the same as an independent human team. The fuzzer finds
