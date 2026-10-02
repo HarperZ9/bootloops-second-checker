@@ -56,7 +56,7 @@ cd "$REPO"
 
 if [ "${SKIP_LEAN:-0}" != 1 ]; then
   (cd lean && lake exe cache get)
-  "$PY" scripts/lean_run.py "$OUT/corpus" "$OUT/lean" --per-corpus 2
+  "$PY" scripts/lean_run.py "$OUT/corpus" "$OUT/lean" --per-corpus 2 --rows-per-module 6 --linear-max-terms 100
   [ "${SKIP_SCALE:-0}" = 1 ] || "$PY" scripts/lean_run.py "$OUT/corpus" "$OUT/lean_scale" --only-scale
   "$PY" scripts/lean_reflect.py "$OUT/corpus" "$OUT/lean_reflect" --jobs "${LEAN_JOBS:-4}"     --sizes "${REFLECT_SIZES:-10000,30000,100000,300000,1000000}"
 fi
