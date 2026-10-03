@@ -39,7 +39,7 @@ Mathlib (several GB).
 | `scripts/edge_cases.py` | inputs where the spec is silent or the two readings differ |
 | `scripts/lean_run.py` | kernel check of a sample, Lean negative controls, scale limits |
 | `scripts/sunrise_quadrature.py` | a 30-digit Feynman-parameter check of one sunrise value |
-| `third_checker/` | checkers written by other model families from the spec and tool page only, with their prompts and raw responses |
+| `third_checker/` | checkers written by other model families from the spec and tool page only, with their prompts and raw responses; `build_task.py` rebuilds the exact prompt |
 | `scripts/compare_third.py` | runs the model-written checkers over the whole corpus |
 | `scripts/fuzz.py`, `scripts/fuzz_cases.py` | seeded differential fuzzer over the witness format, with minimized repros |
 | `lean/ReceiptLean/Reflect.lean` | proof by reflection: a verified column checker the kernel evaluates |
@@ -47,6 +47,16 @@ Mathlib (several GB).
 | `EXTENSION-DECISION.md` | what each extension was meant to change, written before the work |
 | `REPORT.md` | results, disagreements and limits |
 | `.provenance.log` | when the spec, the docs and `core.py` were first opened |
+
+## Third-party material
+
+BootLoops code is not copied here; `run_all.sh` clones it at the pinned commit
+and checks the hashes in `inputs/`. The sunrise bundle is downloaded from
+bootloops.ai and checked the same way. `third_checker/spec_WITNESS_FORMAT.md` is
+BootLoops' `WITNESS_FORMAT.md`, CC BY 4.0, credited in `third_checker/NOTICE`.
+The text of the public receipt tool page was part of the model prompt but is
+not redistributed, because the page states no license; `third_checker/NOTICE`
+says how to fetch it and rebuild the prompt.
 
 ## Limits
 

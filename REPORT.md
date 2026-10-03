@@ -529,8 +529,10 @@ To test whether the findings depend on that, other models were asked to write a
 checker from the same two sources and nothing else. The prompt,
 `third_checker/task.txt`, holds `WITNESS_FORMAT.md` at the pinned commit (sha256
 `59562276...`), the text of the public tool page (sha256 `3edffafb...`), and a
-short I/O contract written for this test: arguments, one JSON line per witness,
-exit codes, never crash, ignore the fingerprint. No model saw `core.py`, any
+short I/O contract written for this test. The page text is not redistributed,
+since the page states no license; `third_checker/build_task.py` rebuilds the
+exact prompt from a saved copy and checks both hashes. The I/O contract covers
+arguments, one JSON line per witness, exit codes, never crash, ignore the fingerprint. No model saw `core.py`, any
 BootLoops test, this repository's checkers, or any corpus witness before it
 wrote its first version. Every raw response is kept in `third_checker/`, and each
 checker file is the model's code byte for byte under a provenance header.
