@@ -60,3 +60,9 @@ jobs:
           done
           [ "$found" = 1 ] || { echo "no results/run-*/SHA256SUMS found"; exit 1; }
           echo "every run folder matches its SHA256SUMS"
+  art-receipts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Verify art receipt digests
+        run: python3 scripts/check_art_receipts.py
