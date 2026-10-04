@@ -46,3 +46,17 @@ jobs:
             fi
           done
           echo "every sealed file matches its committed blob"
+      # The seal itself: every run folder's SHA256SUMS must match its files. The
+      # .gitattributes pin keeps sealed bytes unchanged on the Windows leg.
+      - name: Run folders match their SHA256SUMS
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          found=0
+          for sums in results/run-*/SHA256SUMS; do
+            found=1
+            echo "checking $sums"
+            (cd "$(dirname "$sums")" && sha256sum --strict -c --quiet SHA256SUMS) || exit 1
+          done
+          [ "$found" = 1 ] || { echo "no results/run-*/SHA256SUMS found"; exit 1; }
+          echo "every run folder matches its SHA256SUMS"
