@@ -1,4 +1,17 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HarperZ9/bootloops-second-checker/main/docs/art/hero-dark.svg">
+  <img src="https://raw.githubusercontent.com/HarperZ9/bootloops-second-checker/main/docs/art/hero-light.svg" alt="bootloops-second-checker: Independent second checker for BootLoops RECEIPT v1.0 witnesses. A chain of small linked squares, each holding a few ruled lines, winds inward to a bright core." width="100%">
+</picture>
+
 # bootloops-second-checker
+
+Independent second checker for BootLoops RECEIPT v1.0 witnesses.
+
+```
+sh scripts/run_all.sh OUT_DIR
+```
+
+[![license](https://img.shields.io/badge/license-MIT-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/bootloops-second-checker/blob/main/LICENSE)
 
 An independent second checker for BootLoops RECEIPT v1.0 witnesses, a Lean 4
 kernel check of the same identity over `ZMod p`, and a replay of one published
